@@ -1,13 +1,12 @@
-#include "local.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <argp.h>
 
-void http(char *str)
-{
-	printf("http: %s\n", str);
-}
+#include "local.h"
+#include "https.h"
+#include "posts.h"
+#include "parser.h"
 
 const char *argp_program_version = "redditerm";
 const char *argp_program_bug_address = "<no@bugs.lol>";
@@ -44,17 +43,61 @@ static struct argp argp = { options, parse_opt, args_doc, doc, 0, 0, 0 };
 int main(int argc, char *argv[])
 {
 	struct arguments arguments;
+	char *json_data = NULL;
+	post *first_post;
 
 	arguments.mode = HTTPS;
 
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
-	if(arguments.mode == LOCAL)
+	if(arguments.mode == LOCAL) {
 		local(arguments.infile);
+		return 0;
+	}
 	else if(arguments.mode == HTTPS)
-		http( arguments.url );
+		http( arguments.url, &json_data );
 	else
 		exit(1);
+
+	/* Parse subreddit */
+	if(sub_parse(json_data, &first_post) != 0) {
+		fprintf(stderr, "Failed to parse json\n");
+		exit(1);
+	}
+
+	post *mypost = first_post;
+	while (mypost->tail != NULL) {
+		printf("%s\n", mypost->title);
+		mypost = mypost->tail;
+	}
+
+	mypost = first_post;
+
+	/* Free up memeory */
+	DEBUG("free memory");
+	while (mypost != NULL) { 
+		if(mypost->head != NULL)
+			free(mypost->head);
+		if(mypost->title != NULL)
+			free(mypost->title);
+		if(mypost->author != NULL)
+			free(mypost->author);
+		if(mypost->url != NULL)
+			free(mypost->url);
+		if(mypost->permalink != NULL)
+			free(mypost->permalink);
+
+		if(mypost->tail == NULL)
+		{
+			free(mypost);
+			mypost = NULL;
+		} else {
+			mypost = mypost->tail;
+		}
+	} 
+
+	if(json_data != NULL)
+		free(json_data);
 
 	return 0;
 }

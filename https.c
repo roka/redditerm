@@ -5,8 +5,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "parser.h"
-
 struct string {
 	char *ptr;
 	size_t len;
@@ -43,16 +41,17 @@ int http(char *url, char **dest_str)
 	CURLcode res;
 
 	struct string s;
-	json_object *jobj;
-	init_string(&s);
 	long http_code;
+	size_t len;
+
+	init_string(&s);
 
  	curl_global_init(CURL_GLOBAL_DEFAULT);
 
 	curl = curl_easy_init();
 	if(curl) {
 		curl_easy_setopt(curl, CURLOPT_URL, url);
-		curl_easy_setopt(curl, CURLOPT_USERAGENT, "Redditerm/1.0");
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:48.0) Gecko/20100101 Firefox/48.0");
 
 #ifdef SKIP_PEER_VERIFICATION
     /*
@@ -93,12 +92,13 @@ int http(char *url, char **dest_str)
 		curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
 		if(http_code == 503) {
 			fprintf(stderr, "Reddit is busy: (error code: 503)\n");
-			return 1;
-		}
-		//jobj = json_tokener_parse(s.ptr);
-		//sub_parse(jobj);
-		sub_parse(s);
+			exit(1);
+		} 
 
+		len = strlen(s.ptr);
+		*dest_str = malloc(sizeof(char) * len);
+		strcpy(*dest_str, s.ptr);
+		free(s.ptr);
 	}
 
 	curl_global_cleanup();
