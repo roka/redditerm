@@ -7,6 +7,8 @@ int get_string_jobj(json_object *jobj, const char *str, char **dest_str)
 
 	/* Get title */
 	json_object_object_get_ex(jobj, str, &jstring);
+	if(json_object_get_type(jstring) != 6) // Check if object is a string
+		return 2;
 	len=strlen(json_object_get_string(jstring));
 	if(len < 1)
 		return 1;
@@ -73,6 +75,47 @@ int sub_parse(char *str, post **post_list)
 	return 0;
 }
 
+int traverse_comments_children(int depth, json_object *jobj)
+{
+	int array_lenght = json_object_array_length(jobj);
+	int i;
+	char *test;
+	json_object *data;
+	json_object *tmp;
+	json_object *children; // replies > data > children
+
+	for(i = 0; i < array_lenght; i++) {
+		tmp = json_object_array_get_idx(jobj, i);
+		/* Get data */
+		if (json_object_object_get_ex(tmp, "data", &data) == 0) {
+			continue;
+		}
+
+		/* Get body string */
+		if(get_string_jobj(data, "body", &test) == 0)
+			printf("%d> %s\n", depth, test);
+
+		/* Get children */
+		if (json_object_object_get_ex(data, "replies", &children) != 0 &&
+				(json_object_get_type(children) == 4) ) {
+			if (json_object_object_get_ex(children, "data", &children) != 0) {
+				if (json_object_object_get_ex(children, "children", &children) != 0) {
+					if(json_object_get_type(children) == 5) // is array
+						traverse_comments_children(++depth, children);
+					
+				}
+			}
+		} 
+
+		if(test != NULL) {
+			free(test);
+			test=NULL;
+		}
+	}
+
+	return 0;
+}
+
 /* Parse reddit comments.
  * The comments are stored in a json array[2], where [0] is the root post and
  * all replies lives under [1].
@@ -92,15 +135,7 @@ int comments_parse(char *comments_str, comment **comments_list)
 	}
 
 	json_object *top_post;
-	json_object *top_post_children;
-	json_object *kind;
-	/*json_object *top_post_children_child;
-	json_object *top_post_children_child_data;*/
-
-	//if(json_object_object_get_ex(jobj, "", &top_post) == 0)
-		//return 11;
-	printf("type=%d\n", json_object_get_type(jobj));
-	printf("ary_len: %d\n", json_object_array_length(jobj));
+	json_object *comments;
 
 	/* Get the top post from:
 	 * [0] {"data"} "children"[0] {"data"} string:"selfbody" */
@@ -123,14 +158,22 @@ int comments_parse(char *comments_str, comment **comments_list)
 	DEBUG("%s", test);
 	free(test);
 
+	/* Get Comments
+	 * [2] > data > children
+	 */
+	if(( comments = json_object_array_get_idx(jobj, 1)) == 0)
+		return 11;
 
+	if( json_object_object_get_ex(comments, "data", &comments) == 0)
+		return 12;
 
-	/*if(( top_post_children = json_object_array_get_idx(top_post, 0)) == 0)
-		return 13;*/
+	if( json_object_object_get_ex(comments, "children", &comments) == 0)
+		return 12;
 
-	printf("type=%d\n", json_object_get_type(top_post));
-	//printf("%s", json_object_get_string("selfbody"));
-	
+	if(json_object_get_type(comments) == 5) // is array
+		traverse_comments_children(0, comments);
+	else
+		return 1;
 
 	return 0;
 }
