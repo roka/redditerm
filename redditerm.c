@@ -7,6 +7,7 @@
 #include "https.h"
 #include "posts.h"
 #include "parser.h"
+#include "ui.h"
 
 const char *argp_program_version = "redditerm";
 const char *argp_program_bug_address = "<no@bugs.lol>";
@@ -80,13 +81,13 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	post *mypost = first_post;
-	while (mypost->tail != NULL) {
-		printf("%s\n", mypost->title);
-		mypost = mypost->tail;
-	}
+	init_ui();
 
-	mypost = first_post;
+	post_window* window = create_windows(first_post);
+
+	begin_window_selection(window);
+
+	post *mypost = first_post;
 
 	/* Free up memeory */
 	DEBUG("free memory");
@@ -113,6 +114,8 @@ int main(int argc, char *argv[])
 
 	if(json_data != NULL)
 		free(json_data);
+	
+	close_ui();
 
 	return 0;
 }
