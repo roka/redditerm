@@ -51,13 +51,16 @@ int main(int argc, char *argv[])
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
 	if(arguments.mode == LOCAL) {
-		local(arguments.infile);
-		return 0;
+		DEBUG("LOCAL MODE");
+		local(arguments.infile, &json_data);
 	}
-	else if(arguments.mode == HTTPS)
+	else if(arguments.mode == HTTPS) {
+		DEBUG("HTTPS MODE");
 		http( arguments.url, &json_data );
-	else
+	}
+	else {
 		exit(1);
+	}
 
 	/* Parse subreddit */
 	if(sub_parse(json_data, &first_post) != 0) {
