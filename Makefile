@@ -1,14 +1,21 @@
 CC=gcc
 CFLAGS=-Wall -lcurl -ljson-c
+DEBUGFLAGS=-DDEBUG_MACRO
 
-all: https.o redditerm
+debug: local.o parser.o local.o redditerm.o redditerm
 
-https.o:
-	$(CC) $(CFLAGS) -c https.c	
+local.o:
+	$(CC) $(CFLAGS) $(DEBUGFLAGS) -c local.c
 
-redditerm: https.o
-	$(CC) $(CFLAGS) -o redditerm https.o
+parser.o:
+	$(CC) $(CFLAGS) $(DEBUGFLAGS) -c parser.c
+
+redditerm.o:
+	$(CC) $(CFLAGS) $(DEBUGFLAGS) -c redditerm.c
+
+redditerm:
+	$(CC) $(CFLAGS) $(DEBUGFLAGS) -o redditerm local.o parser.o redditerm.o
 
 clean:
-	rm redditerm *.o
+	rm -f redditerm local *.o
 

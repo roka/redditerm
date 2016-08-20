@@ -1,27 +1,16 @@
 /* (error code: 503) */
+
 #include <stdio.h>
 #include <curl/curl.h>
 #include <string.h>
 #include <stdlib.h>
-#include <json-c/json.h>
+
+#include "parser.h"
 
 struct string {
 	char *ptr;
 	size_t len;
 };
-
-void sub_parse(json_object *jobj)
-{
-	enum json_type type;
-	json_object_object_foreach(jobj, key, val) {
-	type = json_object_get_type(val);
-	switch (type) {
-		case json_type_string: printf("type: json_type_string, ");
-		printf("value: %sn", json_object_get_string(val));
-		break;
-	}
-	}
-}
 
 void init_string(struct string *s) {
 	  s->len = 0;
@@ -48,24 +37,22 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s)
 		      return size*nmemb;
 }
 
-int main(void)
+int http(char *url, char **dest_str)
 {
   	CURL *curl;
 	CURLcode res;
-	//FILE *fp;
-	//char outfilename[FILENAME_MAX] = "page.html";
+
 	struct string s;
 	json_object *jobj;
 	init_string(&s);
+	long http_code;
 
  	curl_global_init(CURL_GLOBAL_DEFAULT);
 
 	curl = curl_easy_init();
 	if(curl) {
-		printf("CURL DL\n");
-		//fp = fopen(outfilename,"wb");
-		curl_easy_setopt(curl, CURLOPT_URL, "https://www.reddit.com/r/netsec.json");
-		curl_easy_setopt(curl, CURLOPT_USERAGENT, "Dark Secret Ninja/1.0");
+		curl_easy_setopt(curl, CURLOPT_URL, url);
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, "Redditerm/1.0");
 
 #ifdef SKIP_PEER_VERIFICATION
     /*
@@ -102,10 +89,15 @@ int main(void)
 
 		/* always cleanup */
 		curl_easy_cleanup(curl);
-		//fclose(fp);
-		//printf("%s", s.ptr);
-		jobj = json_tokener_parse(s.ptr);
-		sub_parse(jobj);
+
+		curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
+		if(http_code == 503) {
+			fprintf(stderr, "Reddit is busy: (error code: 503)\n");
+			return 1;
+		}
+		//jobj = json_tokener_parse(s.ptr);
+		//sub_parse(jobj);
+		sub_parse(s);
 
 	}
 
