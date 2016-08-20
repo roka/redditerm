@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "debug.h"
+
 struct string {
 	char *ptr;
 	size_t len;
@@ -93,7 +95,9 @@ int http(char *url, char **dest_str)
 		if(http_code == 503) {
 			fprintf(stderr, "Reddit is busy: (error code: 503)\n");
 			exit(1);
-		} 
+		} else {
+			DEBUG("http_code=%lu", http_code);
+		}
 
 		len = strlen(s.ptr);
 		*dest_str = malloc(sizeof(char) * len);
