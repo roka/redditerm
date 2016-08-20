@@ -12,6 +12,7 @@ void init_ui() {
 	start_color();
 	init_pair(1, COLOR_YELLOW, COLOR_BLUE);
 	init_pair(2, COLOR_YELLOW, COLOR_RED);
+	curs_set(0);
 }
 
 void close_ui() {
