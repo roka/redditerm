@@ -13,12 +13,13 @@ const char *argp_program_bug_address = "<no@bugs.lol>";
 static char doc[] = "A reddit terminal based client.";
 static char args_doc[] = "[FILENAME]...";
 static struct argp_option options[] = { 
-	{ "local", 'l', "INFILE", 0, "Parse local json file."},
+	{ "local", 'l', "INFILE", 0, "Parse local json subreddit file."},
+	{ "localcomments", 'c', "INFILE", 0, "Parse local json comments file."},
 	{ 0 } 
 };
 
 struct arguments {
-	enum { LOCAL, HTTPS } mode;
+	enum { LOCAL, LOCALCOMMENTS, HTTPS } mode;
 	char *infile;
 	char *url;
 };
@@ -30,6 +31,10 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 		       	arguments->mode = LOCAL;
 			arguments->infile = arg;
 		       	break;
+		case 'c':
+			arguments->mode = LOCALCOMMENTS;
+			arguments->infile = arg;
+			break;
 		case ARGP_KEY_ARG:
 			arguments->url = arg;
 		       	return 0;
@@ -45,6 +50,7 @@ int main(int argc, char *argv[])
 	struct arguments arguments;
 	char *json_data = NULL;
 	post *first_post;
+	comment *first_comment;
 
 	arguments.mode = HTTPS;
 
@@ -53,6 +59,12 @@ int main(int argc, char *argv[])
 	if(arguments.mode == LOCAL) {
 		DEBUG("LOCAL MODE");
 		local(arguments.infile, &json_data);
+	} else if(arguments.mode == LOCALCOMMENTS) {
+		DEBUG("LOCAL COMMENTS MODE");
+		local(arguments.infile, &json_data);
+		printf("comments_parse=%d\n",
+			comments_parse(json_data, &first_comment));
+		exit(0);
 	}
 	else if(arguments.mode == HTTPS) {
 		DEBUG("HTTPS MODE");

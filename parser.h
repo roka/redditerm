@@ -8,6 +8,7 @@
 
 #include "posts.h"
 #include "debug.h"
+#include "comments.h"
 
 /* Get string from json object */
 int get_string_jobj(json_object *jobj, const char *str, char **dest_str);
@@ -15,5 +16,7 @@ int get_string_jobj(json_object *jobj, const char *str, char **dest_str);
 void parse_post_idx(post *p, json_object *jobj);
 /* Parse subreddit */
 int sub_parse(char *str, post **post_list);
+/* Parse comments */
+int comments_parse(char *comments_str, comment **comments_list);
 
 #endif

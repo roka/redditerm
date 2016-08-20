@@ -73,4 +73,66 @@ int sub_parse(char *str, post **post_list)
 	return 0;
 }
 
+/* Parse reddit comments.
+ * The comments are stored in a json array[2], where [0] is the root post and
+ * all replies lives under [1].
+ * */
+int comments_parse(char *comments_str, comment **comments_list)
+{
+	char *test;
+	enum json_tokener_error err;
+	json_tokener *tok = json_tokener_new_ex(200);
+	json_object *jobj = json_tokener_parse_ex(tok, comments_str, strlen(comments_str));
+
+	err = json_tokener_get_error(tok);
+
+	if (err != json_tokener_success) {
+		fprintf(stderr, "Error: %s\n", json_tokener_error_desc(err));
+		return 1;
+	}
+
+	json_object *top_post;
+	json_object *top_post_children;
+	json_object *kind;
+	/*json_object *top_post_children_child;
+	json_object *top_post_children_child_data;*/
+
+	//if(json_object_object_get_ex(jobj, "", &top_post) == 0)
+		//return 11;
+	printf("type=%d\n", json_object_get_type(jobj));
+	printf("ary_len: %d\n", json_object_array_length(jobj));
+
+	/* Get the top post from:
+	 * [0] {"data"} "children"[0] {"data"} string:"selfbody" */
+	if(( top_post = json_object_array_get_idx(jobj, 0)) == 0)
+		return 11;
+
+	if( json_object_object_get_ex(top_post, "data", &top_post) == 0)
+		return 12;
+
+	if( json_object_object_get_ex(top_post, "children", &top_post) == 0)
+		return 13;
+
+	if(( top_post = json_object_array_get_idx(top_post, 0)) == 0)
+		return 14;
+
+	if( json_object_object_get_ex(top_post, "data", &top_post) == 0)
+		return 15;
+
+	get_string_jobj(top_post, "selftext", &test);
+	DEBUG("%s", test);
+	free(test);
+
+
+
+	/*if(( top_post_children = json_object_array_get_idx(top_post, 0)) == 0)
+		return 13;*/
+
+	printf("type=%d\n", json_object_get_type(top_post));
+	//printf("%s", json_object_get_string("selfbody"));
+	
+
+	return 0;
+}
+
 
