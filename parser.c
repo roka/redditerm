@@ -107,6 +107,21 @@ int traverse_comments_children(int depth, json_object *jobj, comment *c)
 		/* Get body string */
 		if( get_string_jobj(data, "body", &c->body) != 0)
 			c->body = NULL;
+		
+		// parent_id
+		if( get_string_jobj(data, "parent_id", &c->parent_id) != 0) {
+			c->parent_id = NULL;	
+		}
+
+		// id
+		if( get_string_jobj(data, "id", &c->id) != 0) {
+			c->id = NULL;	
+		}
+
+		// author
+		if( get_string_jobj(data, "author", &c->author) != 0) {
+			c->author = NULL;	
+		}
 
 		/* Get children */
 		if (json_object_object_get_ex(data, "replies", &children) != 0 &&
