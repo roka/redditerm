@@ -1,4 +1,29 @@
+/* FILENAME: parser.c
+ *
+ * DESCRIPTION: Functions for parsing JSON data.
+ *
+ * Copyright (C) 2016 Robin Karlsson <s.r.karlsson@gmail.com>.
+ * Copyright (C) 2016 Daniel Ohlsson <dohlsson89@gmail.com>.
+ *
+ * This file is part of redditerm 
+ *
+ * redditerm is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * redditerm is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *  
+ * You should have received a copy of the GNU General Public License
+ * along with redditerm.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #include "parser.h"
+#include "error.h"
 
 /* int get_string_jobj
  * get string "str" from json_object *jobj and save the results in dest_str
@@ -156,7 +181,7 @@ int comments_parse(char *comments_str, comment **comments_list)
 
 	if (err != json_tokener_success) {
 		fprintf(stderr, "Error: %s\n", json_tokener_error_desc(err));
-		return 1;
+		return JSON_FAILED_TO_PARSE;
 	}
 
 	json_object *top_post;
@@ -164,22 +189,29 @@ int comments_parse(char *comments_str, comment **comments_list)
 
 	comment *c;
 
+	if( json_object_get_type(jobj) != json_type_array ) // check that we got an array
+		return JSON_OBJECT_WRONG_TYPE;
+
+	/* The JSON comments array needs to contain at least two elements */
+	if( json_object_array_length(jobj) < 2) 
+		return JSON_OBJECT_NOT_FOUND;
+
 	/* Get the top post from:
 	 * [0] {"data"} "children"[0] {"data"} string:"selfbody" */
 	if(( top_post = json_object_array_get_idx(jobj, 0)) == 0)
-		return 11;
+		return JSON_OBJECT_NOT_FOUND;
 
 	if( json_object_object_get_ex(top_post, "data", &top_post) == 0)
-		return 12;
+		return JSON_OBJECT_NOT_FOUND;
 
 	if( json_object_object_get_ex(top_post, "children", &top_post) == 0)
-		return 13;
+		return JSON_OBJECT_NOT_FOUND;
 
 	if(( top_post = json_object_array_get_idx(top_post, 0)) == 0)
-		return 14;
+		return JSON_OBJECT_NOT_FOUND;
 
 	if( json_object_object_get_ex(top_post, "data", &top_post) == 0)
-		return 15;
+		return JSON_OBJECT_NOT_FOUND;
 
 	/* Get the data from the top post */
 	c = malloc(sizeof(comment));
@@ -213,18 +245,18 @@ int comments_parse(char *comments_str, comment **comments_list)
 	 * [1] > data > children
 	 */
 	if(( comments = json_object_array_get_idx(jobj, 1)) == 0)
-		return 11;
+		return JSON_OBJECT_NOT_FOUND;
 
 	if( json_object_object_get_ex(comments, "data", &comments) == 0)
-		return 12;
+		return JSON_OBJECT_NOT_FOUND;
 
 	if( json_object_object_get_ex(comments, "children", &comments) == 0)
-		return 12;
+		return JSON_OBJECT_NOT_FOUND;
 
-	if(json_object_get_type(comments) == 5) // is array
+	if(json_object_get_type(comments) == json_type_array) // is array
 		traverse_comments_children(0, comments, c->tail);
 	else
-		return 1;
+		return JSON_OBJECT_WRONG_TYPE;
 
 	return 0;
 }
