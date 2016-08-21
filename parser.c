@@ -39,10 +39,10 @@ int get_string_jobj(json_object *jobj, const char *str, char **dest_str)
 	/* Get title */
 	json_object_object_get_ex(jobj, str, &jstring);
 	if(json_object_get_type(jstring) != 6) // Check if object is a string
-		return 2;
+		return JSON_OBJECT_WRONG_TYPE;
 	len=strlen(json_object_get_string(jstring));
 	if(len < 1)
-		return 1;
+		return GENERIC_ERROR;
 	*dest_str = malloc(sizeof(char) * (len + 1));
 	strcpy(*dest_str, json_object_get_string(jstring));
 

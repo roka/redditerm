@@ -26,7 +26,8 @@
 #define __ERROR_H__
 
 /* Common errors 0-99 */
-#define SUCCESS 0
+#define SUCCESS 	0
+#define GENERIC_ERROR	1
 
 /* JSON errors 100-199 */
 #define JSON_OBJECT_WRONG_TYPE	100
