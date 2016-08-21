@@ -3,7 +3,7 @@ CFLAGS=-Wall
 LDFLAGS=-lcurl -ljson-c -lncurses
 DEBUGFLAGS=-DDEBUG_MACRO
 
-debug: local.o parser.o local.o redditerm.o https.o ui.o redditerm
+debug: local.o parser.o local.o redditerm.o https.o ui.o comments.o redditerm
 
 https.o:
 	$(CC) $(CFLAGS) $(DEBUGFLAGS) -c https.c $(LDFLAGS)
@@ -20,8 +20,11 @@ redditerm.o:
 ui.o:
 	$(CC) $(CFLAGS) $(DEBUGFLAGS) -c ui.c $(LDFLAGS)
 
+comments.c:
+	$(CC) $(CFLAGS) $(DEBUGFLAGS) -c comments.c $(LDFLAGS)
+
 redditerm:
-	$(CC) $(CFLAGS) $(DEBUGFLAGS) -o redditerm local.o parser.o redditerm.o https.o ui.o $(LDFLAGS)
+	$(CC) $(CFLAGS) $(DEBUGFLAGS) -o redditerm local.o parser.o redditerm.o https.o ui.o comments.o $(LDFLAGS)
 
 clean:
 	rm -f redditerm local *.o

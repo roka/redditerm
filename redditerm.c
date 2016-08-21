@@ -8,6 +8,7 @@
 #include "posts.h"
 #include "parser.h"
 #include "ui.h"
+#include "comments.h"
 
 const char *argp_program_version = "redditerm";
 const char *argp_program_bug_address = "<no@bugs.lol>";
@@ -69,6 +70,10 @@ int main(int argc, char *argv[])
 		while( (test=test->tail) != NULL) {
 			DEBUG("%s head=%p\ttail=%p child=%p", test->body, test->head, test->tail, test->child);
 		}
+
+		/* Free up memory */
+		free_comments_list(first_comment);
+
 		exit(0);
 	}
 	else if(arguments.mode == HTTPS) {

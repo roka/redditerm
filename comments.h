@@ -15,4 +15,10 @@ struct comment {
 	comment *child;
 }; 
 
+/* Free the data contained in one comment entry */
+void free_comment(comment *c);
+
+/* Free a comments linked list */
+void free_comments_list(comment *c); 
+
 #endif
