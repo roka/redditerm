@@ -72,13 +72,16 @@ int sub_parse(char *str, post **post_list)
 	int i;
 
 	if (json_object_object_get_ex(jobj, "data", &data) == 0)
-		return 1;
-
+		return JSON_OBJECT_NOT_FOUND;
 
 	if (json_object_object_get_ex(data, "children", &array) == 0)
-		return 2;
-	
+		return JSON_OBJECT_NOT_FOUND;
+
+	if( json_object_get_type(array) != json_type_array )
+		return JSON_OBJECT_WRONG_TYPE;
+
 	array_len = json_object_array_length(array);
+
 	for(i=0; i < array_len; i++) {
 		parsed_post = malloc(sizeof(post));
 		if (i == 0) {
@@ -87,7 +90,9 @@ int sub_parse(char *str, post **post_list)
 		}
 
 		post_json = json_object_array_get_idx(array, i);
-		json_object_object_get_ex(post_json, "data", &post_json_data);
+		if( json_object_object_get_ex(post_json, "data", &post_json_data) == 0)
+			return JSON_OBJECT_NOT_FOUND;
+
 		parse_post_idx(parsed_post, post_json_data);
 
 		if (i != 0) {
