@@ -57,7 +57,6 @@ int sub_parse(char *str, post **post_list)
 	for(i=0; i < array_len; i++) {
 		parsed_post = malloc(sizeof(post));
 		if (i == 0) {
-			//printf("hello setting post_list\n");
 			*post_list = parsed_post;
 			parsed_post->head = NULL;
 		}
@@ -75,7 +74,6 @@ int sub_parse(char *str, post **post_list)
 	}
 	parsed_post->tail = NULL;
 
-	//DEBUG("ref_count: %d", (*jobj)._ref_count);
 	json_object_put(jobj);
 
 	return 0;
@@ -85,19 +83,19 @@ int traverse_comments_children(int depth, json_object *jobj, comment *c)
 {
 	int array_lenght = json_object_array_length(jobj);
 	int i;
-	//char *test;
+
 	json_object *data;
 	json_object *tmp;
 	json_object *children; // replies > data > children
 
 	for(i = 0; i < array_lenght; i++) {
 		tmp = json_object_array_get_idx(jobj, i);
+
 		/* Get data */
 		if (json_object_object_get_ex(tmp, "data", &data) == 0) {
 			continue;
 		}
 
-		//DEBUG("head = %lu\ttail = %lu\tchild = %lu", c->head, c->tail, c->child);
 		if( i > 0 ) {
 			c->tail = malloc(sizeof(comment));
 			c->tail->head = c;
@@ -135,7 +133,6 @@ int traverse_comments_children(int depth, json_object *jobj, comment *c)
  * */
 int comments_parse(char *comments_str, comment **comments_list)
 {
-	//char *str;
 	enum json_tokener_error err;
 	json_tokener *tok = json_tokener_new_ex(200);
 	json_object *jobj = json_tokener_parse_ex(tok, comments_str, strlen(comments_str));
