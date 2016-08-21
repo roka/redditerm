@@ -111,12 +111,17 @@ int sub_parse(char *str, post **post_list)
 
 int traverse_comments_children(int depth, json_object *jobj, comment *c)
 {
-	int array_lenght = json_object_array_length(jobj);
+	int array_lenght;
 	int i;
 
 	json_object *data;
 	json_object *tmp;
 	json_object *children; // replies > data > children
+
+	if( json_object_get_type(jobj) != json_type_array ) // check that we got an array
+		return JSON_OBJECT_WRONG_TYPE;
+
+	array_lenght = json_object_array_length(jobj);
 
 	for(i = 0; i < array_lenght; i++) {
 		tmp = json_object_array_get_idx(jobj, i);
