@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 	struct arguments arguments;
 	char *json_data = NULL;
 	post *first_post;
-	comment *first_comment;
+	comment *first_comment,*test;
 
 	arguments.mode = HTTPS;
 
@@ -65,6 +65,10 @@ int main(int argc, char *argv[])
 		local(arguments.infile, &json_data);
 		printf("comments_parse=%d\n",
 			comments_parse(json_data, &first_comment));
+		test=first_comment;
+		while( (test=test->tail) != NULL) {
+			DEBUG("%s head=%p\ttail=%p child=%p", test->body, test->head, test->tail, test->child);
+		}
 		exit(0);
 	}
 	else if(arguments.mode == HTTPS) {

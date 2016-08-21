@@ -1,5 +1,11 @@
 #include "parser.h"
 
+/* int get_string_jobj
+ * get string "str" from json_object *jobj and save the results in dest_str
+ * return 0 OK
+ * 1 empty string
+ * 2 jobj is not a string
+ */
 int get_string_jobj(json_object *jobj, const char *str, char **dest_str)
 {
 	size_t len;
@@ -75,11 +81,11 @@ int sub_parse(char *str, post **post_list)
 	return 0;
 }
 
-int traverse_comments_children(int depth, json_object *jobj)
+int traverse_comments_children(int depth, json_object *jobj, comment *c)
 {
 	int array_lenght = json_object_array_length(jobj);
 	int i;
-	char *test;
+	//char *test;
 	json_object *data;
 	json_object *tmp;
 	json_object *children; // replies > data > children
@@ -91,26 +97,33 @@ int traverse_comments_children(int depth, json_object *jobj)
 			continue;
 		}
 
+		//DEBUG("head = %lu\ttail = %lu\tchild = %lu", c->head, c->tail, c->child);
+		if( i > 0 ) {
+			c->tail = malloc(sizeof(comment));
+			c->tail->head = c;
+			c = c->tail;
+		}
+		c->tail = NULL;
+		c->child = NULL;
+
 		/* Get body string */
-		if(get_string_jobj(data, "body", &test) == 0)
-			printf("%d> %s\n", depth, test);
+		if( get_string_jobj(data, "body", &c->body) != 0)
+			c->body = NULL;
 
 		/* Get children */
 		if (json_object_object_get_ex(data, "replies", &children) != 0 &&
 				(json_object_get_type(children) == 4) ) {
 			if (json_object_object_get_ex(children, "data", &children) != 0) {
 				if (json_object_object_get_ex(children, "children", &children) != 0) {
-					if(json_object_get_type(children) == 5) // is array
-						traverse_comments_children(++depth, children);
+					if(json_object_get_type(children) == 5) { // is array
+						c->child = malloc(sizeof(comment));
+						c->child->head = c;
+						traverse_comments_children(++depth, children, c->child);
+					}
 					
 				}
 			}
 		} 
-
-		if(test != NULL) {
-			free(test);
-			test=NULL;
-		}
 	}
 
 	return 0;
@@ -122,7 +135,7 @@ int traverse_comments_children(int depth, json_object *jobj)
  * */
 int comments_parse(char *comments_str, comment **comments_list)
 {
-	char *test;
+	//char *str;
 	enum json_tokener_error err;
 	json_tokener *tok = json_tokener_new_ex(200);
 	json_object *jobj = json_tokener_parse_ex(tok, comments_str, strlen(comments_str));
@@ -136,6 +149,8 @@ int comments_parse(char *comments_str, comment **comments_list)
 
 	json_object *top_post;
 	json_object *comments;
+
+	comment *c;
 
 	/* Get the top post from:
 	 * [0] {"data"} "children"[0] {"data"} string:"selfbody" */
@@ -154,12 +169,36 @@ int comments_parse(char *comments_str, comment **comments_list)
 	if( json_object_object_get_ex(top_post, "data", &top_post) == 0)
 		return 15;
 
-	get_string_jobj(top_post, "selftext", &test);
-	DEBUG("%s", test);
-	free(test);
+	/* Get the data from the top post */
+	c = malloc(sizeof(comment));
+
+	// selftext / body
+	if( get_string_jobj(top_post, "selftext", &c->body) != 0) {
+		c->body = NULL;	
+	}
+	// parent_id
+	if( get_string_jobj(top_post, "parent_id", &c->parent_id) != 0) {
+		c->parent_id = NULL;	
+	}
+	// id
+	if( get_string_jobj(top_post, "id", &c->id) != 0) {
+		c->id = NULL;	
+	}
+	// author
+	if( get_string_jobj(top_post, "author", &c->author) != 0) {
+		c->author = NULL;	
+	}
+	c->depth = 0;
+	c->head = NULL;
+	c->child = NULL;
+	c->tail = NULL;
+	*comments_list = c;
+
+	c->tail = malloc(sizeof(comment));
+	c->tail->head=c;
 
 	/* Get Comments
-	 * [2] > data > children
+	 * [1] > data > children
 	 */
 	if(( comments = json_object_array_get_idx(jobj, 1)) == 0)
 		return 11;
@@ -171,7 +210,7 @@ int comments_parse(char *comments_str, comment **comments_list)
 		return 12;
 
 	if(json_object_get_type(comments) == 5) // is array
-		traverse_comments_children(0, comments);
+		traverse_comments_children(0, comments, c->tail);
 	else
 		return 1;
 
